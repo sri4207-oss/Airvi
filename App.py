@@ -4,7 +4,6 @@ from google import genai
 st.set_page_config(page_title="Airvi AI", page_icon="✨")
 st.title("Airvi AI")
 
-# Pass the key from Streamlit Secrets explicitly
 client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
 if "messages" not in st.session_state:
@@ -22,7 +21,7 @@ if prompt := st.chat_input("Ask Airvi anything..."):
     with st.chat_message("assistant"):
         try:
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-3.8-flash",
                 contents=prompt,
             )
             reply = response.text
