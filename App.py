@@ -1,33 +1,33 @@
-import os
-from flask import Flask, render_template, request, jsonify
-from dotenv import load_dotenv
+import streamlit as st
 from google import genai
 
-load_dotenv()
+st.set_page_config(page_title="Airvi AI", page_icon="✨")
+st.title("Airvi AI")
 
-app = Flask(__name__)
+# Pass the key from Streamlit Secrets explicitly
+client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
-# Initialize Gemini client (automatically reads GEMINI_API_KEY from environment)
-client = genai.Client()
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-@app.route("/chat", methods=["POST"])
-def chat():
-    user_message = request.json.get("message", "").strip()
-    if not user_message:
-        return jsonify({"error": "Empty message"}), 400
+if prompt := st.chat_input("Ask Airvi anything..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=user_message,
-        )
-        return jsonify({"reply": response.text})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    with st.chat_message("assistant"):
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+            )
+            reply = response.text
+        except Exception as e:
+            reply = f"Error: {e}"
+        st.markdown(reply)
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    st.session_state.messages.append({"role": "assistant", "content": reply})
